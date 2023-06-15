@@ -1,0 +1,4 @@
+load("/Volumes/kwakupa/particleFilters/Example1/bootstrapPF/example1BaselineSMC2boostrap.RData")
+load("/Volumes/kwakupa/particleFilters/Example1/bootstrapPF/example1SimData2.RData")
+load("/Volumes/kwakupa/particleFilters/Example1/auxiliaryPF/example1SimData2.RData")
+load("/Volumes/kwakupa/particleFilters/Example1/bootstrapPF/example1SimData2.RData")

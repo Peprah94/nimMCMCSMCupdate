@@ -1,0 +1,39 @@
+
+## load the nimble library and set seed
+load("Example1/simulatedDataEx1.RData")
+
+
+# Load packages
+library(nimble)
+library(nimbleSMC)
+library(nimMCMCSMCupdates)
+
+pfTypeRun = "auxiliary"
+
+# load function to fit the models with MCMC
+source("Example1/functionSimEstimation.R")
+
+
+library(parallel)
+library(doParallel)
+thisCluster <- makeCluster(5)
+
+# Fit an auxiliary PF
+auxiliaryEstimates <- parallel::parLapply(cl = thisCluster,
+                                          X = 1:30,
+                                          fun = runFunction,
+                                          simData = simData,
+                                          iNodePrev = c(49, 45, 20, 10, 5),
+                                          nIterations = 30000,
+                                          nBurnin = 20000,
+                                          nChains = 3,
+                                          nThin= 1,
+                                          nyears = 50,
+                                          numParticles = 1000,
+                                          pfTypeRun = "auxiliary")
+
+
+#save results
+save(auxiliaryEstimates, file = "Example1/auxiliaryPF/estimatesAFNew2.RData")
+stopCluster(thisCluster)
+
