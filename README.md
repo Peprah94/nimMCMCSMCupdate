@@ -23,4 +23,34 @@ This folder contains R-script for fitting the linear Gaussian state space model 
 
 * `bootstrapPF` - contains script to run the auxiliary particle filter
 
- 
+### Dynamic Occupancy model (/dynamicOccupancyModel)
+
+This folder contains R-script for fitting the dynamic occupancy model described in simulation study two of the paper. The folder contains the files and folders: 
+
+* `auxiliaryEst.R` - Simulate data and fit the dynamic occupancy model to the data.
+
+* `Archive.zip` - Results from the fitted model.
+
+### Demographic SSM (/demographicSSM)
+
+This folder contains R-script for fitting the demographic state-space model described in case study one in the paper. The folder contains the files and folders: 
+
+* `populationDemographics.R` - Fit the demographic SSM to the data. The data is accessed from the R-package `AHMbook`.
+
+* `Archive.zip` - Results from the fitted model.
+
+### Occupancy model fitted using `sparta` (/spartaOccupancyModel)
+
+This folder contains R-script for fitting the occupancy model described in case study two in the paper. The folder contains the files and folders: 
+
+* `example3.R` - Fit the demographic SSM to the data. 
+
+## Plotting results
+
+The `plots.R` script is used to summarise the results obtained from the analysis. The figures and tables in the main paper are in the `Figures` folder.
+
+## Supplementary Materials
+
+This folder hosts three pdf files that provides additional information to the manuscript.
+
+
