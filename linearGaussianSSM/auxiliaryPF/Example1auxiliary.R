@@ -20,13 +20,13 @@ thisCluster <- makeCluster(5)
 
 # Fit an auxiliary PF
 auxiliaryEstimates <- parallel::parLapply(cl = thisCluster,
-                                          X = 1:30,
+                                          X = 16:30,
                                           fun = runFunction,
                                           simData = simData,
                                           iNodePrev = c(49, 45, 20, 10, 5),
                                           nIterations = 30000,
                                           nBurnin = 20000,
-                                          nChains = 3,
+                                          nChains = 2,
                                           nThin= 1,
                                           nyears = 50,
                                           numParticles = 1000,
@@ -34,6 +34,6 @@ auxiliaryEstimates <- parallel::parLapply(cl = thisCluster,
 
 
 #save results
-save(auxiliaryEstimates, file = "Example1/auxiliaryPF/estimatesAFNew2.RData")
+save(auxiliaryEstimates, file = "Example1/auxiliaryPF/estimates2.RData")
 stopCluster(thisCluster)
 

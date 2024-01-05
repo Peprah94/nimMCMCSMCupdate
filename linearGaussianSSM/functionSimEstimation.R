@@ -11,7 +11,7 @@ library(nimMCMCSMCupdates)
 # Function to fit replicated data
 
 runFunction <- function(iter,
-                        simData,
+                        simDataAll,
                         numParticles,
                         mcmcRun = TRUE,
                         pfTypeRun,
@@ -28,33 +28,34 @@ runFunction <- function(iter,
 
   # create empty lists to store the results
   example1ReducedModelTrue <- list()
-  example1ReducedModelFalse <- list()
-  example1UpdatedModelTrue <- list()
-  example1UpdatedModelFalse <- list()
+  #example1ReducedModelFalse <- list()
+  example1UpdatedModelTrueBF <- list()
+  example1UpdatedModelTrueAux <- list()
+  #example1UpdatedModelFalse <- list()
   baselineModel <- list()
 
 
   #load data
-  simData <- simData[[iter]]
+  simData <- simDataAll[[iter]]
 
   # NIMBLE CODE
   stateSpaceCode <- nimbleCode({
-    x[1] ~ dnorm(b/(1-a), sd = 1)
+    x[1] ~ dnorm(a, sd = 1)
     #x[1] <- 0
-    y[1] ~ dnorm(x[1], sd = 1)
+    y[1] ~ dnorm(c*x[1], sd = 1)
     for(i in 2:t){
-      x[i] ~ dnorm(a*x[i-1] + b, sd = 1)
+      x[i] ~ dnorm(a*x[i-1], sd = 1)
       y[i] ~ dnorm(x[i] * c, 1)
     }
     a ~ dunif(0, 0.999)
-    b ~ dnorm(0, 1)
+    #b ~ dnorm(0, 1)
     c ~ dnorm(1,1)
     #d ~ T(dnorm(0, 1), 0.001, 4)
 
 
     #estimate biases
     ahat <- a - aTrue
-    bhat <- b - bTrue
+    #bhat <- b - bTrue
     chat <- c - cTrue
   })
 
@@ -62,20 +63,20 @@ runFunction <- function(iter,
   data <- list(
     y = simData$y
   )
-  
+
   # define constants
   constants <- list(
     t = nyears,
     aTrue = 0.5,
-    bTrue = 0.5,
+    #bTrue = 0.5,
     cTrue = 1,
     dTrue = 1
   )
-  
+
   #define initial values
   inits <- list(
     a = 0.2,
-    b = 0.8,
+    #b = 0.8,
     # mu0= 0.8,
     c = 1
   )
@@ -99,7 +100,7 @@ runFunction <- function(iter,
       cTrue = 1,
       dTrue = 1
     )
-    
+
     #Define model for reduced model
     newModelReduced <- nimbleModel(stateSpaceCode,
                                    data = data,
@@ -112,29 +113,16 @@ runFunction <- function(iter,
                                                               latent = "x",
                                                               nParFiltRun = numParticles,
                                                               mcmc = TRUE,
-                                                              block = FALSE,
+                                                              block = TRUE,
                                                               pfType = pfTypeRun,
-                                                              MCMCconfiguration = list(target = c('a', 'b', 'c'),
-                                                                                       additionalPars = c("x", "ahat", "bhat", "chat"),
+                                                              MCMCconfiguration = list(target = c('a',  'c'),
+                                                                                       additionalPars = c("x", "ahat", "chat"),
                                                                                        n.iter = nIterations,
                                                                                        n.chains = nChains,
                                                                                        n.burnin = nBurnin,
                                                                                        n.thin = nThin)
     )
 
-    # Fit reduced model with pMCMC
-    example1ReducedModelFalse[[iNodetag]]  <- spartaNimWeights(model = newModelReduced,
-                                                               latent = "x",
-                                                               nParFiltRun = numParticles,
-                                                               mcmc = FALSE,
-                                                               pfType = pfTypeRun,
-                                                               MCMCconfiguration = list(target = c('a', 'b', 'c'),
-                                                                                        additionalPars = c("x", "ahat", "bhat", "chat"),
-                                                                                        n.iter = nIterations,
-                                                                                        n.chains = nChains,
-                                                                                        n.burnin = nBurnin,
-                                                                                        n.thin = nThin)
-    )
 
 
 
@@ -145,15 +133,22 @@ runFunction <- function(iter,
 
     # data for updated model
     data <- list(
-      y = simData$y[c((iNodePrev[iNodetag]):50)]
+      y = simData$y#[c((iNodePrev[iNodetag]):50)]
     )
-    
+
     # constants for updated model
     constants <- list(
-      t = 50 - iNodePrev[iNodetag] + 1,
+      t = 50 ,#- iNodePrev[iNodetag] + 1,
       aTrue = 0.5,
-      bTrue = 0.5,
+      #bTrue = 0.5,
       cTrue = 1
+    )
+
+    inits <- list(
+      a = example1ReducedModelTrue[[iNodetag]]$summary$all.chains["a",1 ],
+      #b = 0.8,
+      # mu0= 0.8,
+      c = example1ReducedModelTrue[[iNodetag]]$summary$all.chains["c",1 ]
     )
 
     # Define model for updated model
@@ -164,14 +159,15 @@ runFunction <- function(iter,
                                    check = FALSE)
 
     # Fit model with results from fitted reduced MCMC model fit
-    example1UpdatedModelTrue[[iNodetag]]  <- nimMCMCSMCupdates::spartaNimUpdates(model = newModelUpdated, #nimble model
+    example1UpdatedModelTrueBF[[iNodetag]]  <- nimMCMCSMCupdates::spartaNimUpdates(model = newModelUpdated, #nimble model
                                                               reducedModel = newModelReduced,
                                                               latent = "x", #latent variable
                                                               nParFiltRun = numParticles,
-                                                              propCov = diag(3)* c(0.1, 1,1),
-                                                              pfType = pfTypeRun,
-                                                              MCMCconfiguration = list(target = c('a', 'b', 'c'),
-                                                                                       additionalPars = c("x", "ahat", "bhat", "chat"),
+                                                              propCov = diag(2)* c(0.1,1),
+                                                              pfType = "bootstrap",
+                                                              extraVars = NULL,
+                                                              MCMCconfiguration = list(target = c('a', 'c'),
+                                                                                       additionalPars = c("x", "ahat", "chat"),
                                                                                        n.iter = (nIterations - nBurnin)/nThin,
                                                                                        n.chains = nChains,
                                                                                        n.burnin = 0,
@@ -181,31 +177,32 @@ runFunction <- function(iter,
                                                                                smoothing = TRUE,
                                                                                mcmc = TRUE,
                                                                                M = nyears - iNodePrev[iNodetag],
-                                                                               iNodePrev = 1)
+                                                                               iNodePrev = iNodePrev[iNodetag])
     )
 
 
-    # Fit updated model with reduced model pMCMC
-    example1UpdatedModelFalse[[iNodetag]] <- nimMCMCSMCupdates::spartaNimUpdates(model = newModelUpdated, #nimble model
-                                                              reducedModel = newModelReduced,
-                                                              nParFiltRun = numParticles,
-                                                              latent = "x", #latent variable
-                                                              pfType = pfTypeRun,
-                                                              propCov = diag(3)* c(0.1, 1,1),
-                                                              MCMCconfiguration = list(target = c('a', 'b', 'c'),
-                                                                                       additionalPars = c("x", "ahat", "bhat", "chat"),
-                                                                                       n.iter = (nIterations - nBurnin)/nThin,
-                                                                                       n.chains = nChains,
-                                                                                       n.burnin = 0,
-                                                                                       n.thin = 1),  #saved loglikelihoods from reduced model
-                                                              postReducedMCMC = example1ReducedModelFalse[[iNodetag]],# MCMC summary to use as initial values
-                                                              pfControl = list(saveAll = TRUE,
-                                                                               #lookahead = "mean",
-                                                                               smoothing = TRUE,
-                                                                               mcmc = FALSE,
-                                                                               M = nyears - iNodePrev[iNodetag],
-                                                                               iNodePrev = 1)
+    example1UpdatedModelTrueAux[[iNodetag]]  <- nimMCMCSMCupdates::spartaNimUpdates(model = newModelUpdated, #nimble model
+                                                                                 reducedModel = newModelReduced,
+                                                                                 latent = "x", #latent variable
+                                                                                 nParFiltRun = numParticles,
+                                                                                 propCov = diag(2)* c(0.1,1),
+                                                                                 pfType = "auxiliary",
+                                                                                 extraVars = NULL,
+                                                                                 MCMCconfiguration = list(target = c('a', 'c'),
+                                                                                                          additionalPars = c("x", "ahat", "chat"),
+                                                                                                          n.iter = (nIterations - nBurnin)/nThin,
+                                                                                                          n.chains = nChains,
+                                                                                                          n.burnin = 0,
+                                                                                                          n.thin = 1),  #saved loglikelihoods from reduced model
+                                                                                 postReducedMCMC = example1ReducedModelTrue[[iNodetag]],# MCMC summary to use as initial values
+                                                                                 pfControl = list(saveAll = TRUE,
+                                                                                                  smoothing = TRUE,
+                                                                                                  mcmc = TRUE,
+                                                                                                  lookahead = "mean",
+                                                                                                  M = nyears - iNodePrev[iNodetag],
+                                                                                                  iNodePrev = iNodePrev[iNodetag])
     )
+
   }
 
 
@@ -241,28 +238,46 @@ runFunction <- function(iter,
   newModel <- stateSpaceModel$newModel(replicate = TRUE)
 
   # Function to run the baseline model
-  
+
   # Fit baseline model with MCMC
   baselineModel[[1]] <- nimMCMCSMCupdates::baselineSpartaEstimation(model = newModel,
                                                                latent = "x",
-                                                               pfType = pfTypeRun,
+                                                               pfType = "bootstrap",
                                                                nParFiltRun = numParticles,
-                                                               MCMCconfiguration = list(target = c('a', 'b', 'c'),
-                                                                                        additionalPars = c("x", "ahat", "bhat", "chat"),
+                                                               pfControl = list(saveAll = TRUE,
+                                                                                lookahead = "mean",
+                                                                                smoothing = FALSE),
+                                                               MCMCconfiguration = list(target = c('a', 'c'),
+                                                                                        additionalPars = c("x", "ahat", "chat"),
                                                                                         n.iter = nIterations,
                                                                                         n.chains = nChains,
                                                                                         n.burnin = nBurnin,
                                                                                         n.thin = nThin))
-  
+
+  baselineModel[[2]] <- nimMCMCSMCupdates::baselineSpartaEstimation(model = newModel,
+                                                                    latent = "x",
+                                                                    pfType = "auxiliary",
+                                                                    nParFiltRun = numParticles,
+                                                                    pfControl = list(saveAll = TRUE,
+                                                                                     lookahead = "mean",
+                                                                                     smoothing = FALSE),
+                                                                    MCMCconfiguration = list(target = c('a', 'c'),
+                                                                                             additionalPars = c("x", "ahat", "chat"),
+                                                                                             n.iter = nIterations,
+                                                                                             n.chains = nChains,
+                                                                                             n.burnin = nBurnin,
+                                                                                             n.thin = nThin))
+
 
   # Fit baseline model with SMC
-  baselineModel[[2]]  <- nimMCMCSMCupdates::spartaNimWeights(model = newModel,
+  baselineModel[[3]]  <- nimMCMCSMCupdates::spartaNimWeights(model = stateSpaceModel,
                                                          latent = "x",
                                                          nParFiltRun = numParticles,
                                                          mcmc = TRUE,
+                                                         block = TRUE,
                                                          pfType = pfTypeRun,
-                                                         MCMCconfiguration = list(target = c('a', 'b', 'c'),
-                                                                                  additionalPars = c("x", "ahat", "bhat", "chat"),
+                                                         MCMCconfiguration = list(target = c('a', 'c'),
+                                                                                  additionalPars = c("x", "ahat", "chat"),
                                                                                   n.iter = nIterations,
                                                                                   n.chains = nChains,
                                                                                   n.burnin = nBurnin,
@@ -272,24 +287,26 @@ runFunction <- function(iter,
 #return results
   ret <- c(baselineModel,
             example1ReducedModelTrue,
-           example1ReducedModelFalse,
-           example1UpdatedModelTrue,
-           example1UpdatedModelFalse)
+           #example1ReducedModelFalse,
+           example1UpdatedModelTrueBF,
+           example1UpdatedModelTrueAux
+          # example1UpdatedModelFalse
+           )
 
   return(ret)
 }
 
 
 #Function to simulate data
-sim2 <- function(a, b, c, t, seed){
+sim2 <- function(a, c, t, seed){
   set.seed(seed)
   x <- y <- numeric(t)
-  x[1] <- rnorm(1, b/(1-a), sd = 1 )
-  y[1] <- rnorm(1, x[1], 1)
+  x[1] <- rnorm(1, a, sd = 1 )
+  y[1] <- rnorm(1, x[1], sd=  1)
 
   for(k in 2:t){
-    x[k] <- rnorm(1, a*x[k -1] + b, sd = 1)
-    y[k] <- rnorm(1, x[k]*c, 1)
+    x[k] <- rnorm(1, a*x[k -1], sd = 1)
+    y[k] <- rnorm(1, x[k]*c, sd= 1)
   }
   return(list(x=x, y=y))
 }
