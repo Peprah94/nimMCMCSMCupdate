@@ -1,5 +1,5 @@
-# This function is used to simulate the data for example 1
-source("Example1/functionSimEstimation.R")
+# This function is used to simulate the data for linear Gaussian SSM
+source("linearGaussianSSM/functionSimEstimation.R")
 
 #Simulate dataset
 numSimulations <- 100
@@ -12,4 +12,5 @@ simData <- lapply(1:numSimulations, function(x){
       x)
 })
 
-save(simData, file = "Example1/simulatedDataEx1.RData")
+# save the data
+save(simData, file = "linearGaussianSSM/simulatedDataEx1.RData")

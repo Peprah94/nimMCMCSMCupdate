@@ -18,7 +18,7 @@ library(egg)
 # Linear Gaussian SSM
 ####################
 
-load("Example1/simulatedDataEx1.RData")
+load("linearGaussianSSM/simulatedDataEx1.RData")
 
 # Need to format the data from Example One
 #write a function to do that
@@ -44,22 +44,22 @@ averageRMSE <- function(x,y){
 }
 
 ## Load data for Aux PF
-load("Example1/bootstrapPF/estimates1.RData")
+load("linearGaussianSSM/bootstrapPF/estimates1.RData")
 pf1 <- bootstrapEstimates[1:15]
 rm(bootstrapEstimates)
-load("Example1/auxiliaryPF/estimates2.RData")
+load("linearGaussianSSM/auxiliaryPF/estimates2.RData")
 pf2 <- auxiliaryEstimates[1:15]
 rm(auxiliaryEstimates)
-load("Example1/bootstrapPF/estimates3.RData")
+load("linearGaussianSSM/bootstrapPF/estimates3.RData")
 pf3 <- bootstrapEstimates[1:15]
 rm(bootstrapEstimates)
-load("Example1/auxiliaryPF/estimates4.RData")
+load("linearGaussianSSM/auxiliaryPF/estimates4.RData")
 pf4 <- auxiliaryEstimates[1:15]
 rm(auxiliaryEstimates)
-load("Example1/bootstrapPF/estimates5.RData")
+load("linearGaussianSSM/bootstrapPF/estimates5.RData")
 pf5 <- bootstrapEstimates[1:15]
 rm(bootstrapEstimates)
-load("Example1/auxiliaryPF/estimates6.RData")
+load("linearGaussianSSM/auxiliaryPF/estimates6.RData")
 pf6 <- auxiliaryEstimates[1:15]
 rm(auxiliaryEstimates)
 
@@ -128,9 +128,6 @@ biasModelPars1 <- biasModelPars%>%
   dplyr::group_by(t,model )%>%
   dplyr::summarise(across(c(ahat,chat), median))%>%
   reshape2::melt(., id.vars = c("t", "model"))%>%
-  # filter(model %in% c("ABMC", "ABSC",
-  #                     "ARMC",
-  #                     "AUMC", "BUMC", "BBSC"))%>%
   dplyr::mutate(model = replace(model, model == "ABMC", "BMC"))%>%
   dplyr::mutate(model = replace(model, model == "ARMC", "RMC"))
 
@@ -153,11 +150,6 @@ biasModelParsAhat <- biasModelPars1%>%
   theme_classic()+
   theme(legend.position = "bottom")+
   theme(legend.title = element_blank())+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       strip.text.x = element_text(size = 25),
-  #       legend.title = element_text(size=20),
-  #       legend.text = element_text(size=20)) +
   scale_color_manual(values = fill.colors)+
   xlab("")+
   ylab("Bias")
@@ -179,11 +171,6 @@ biasModelParsChat <- biasModelPars1%>%
   theme_classic()+
   theme(legend.position = "bottom")+
   theme(legend.title = element_blank())+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       strip.text.x = element_text(size = 25),
-  #       legend.title = element_text(size=20),
-  #       legend.text = element_text(size=20)) +
   scale_color_manual(values = fill.colors)+
   xlab(" ")+
   ylab(" ")
@@ -234,11 +221,6 @@ mcseModelParsA <- mcseEstimatesPars1%>%
   theme_classic()+
   theme(legend.position = "bottom")+
   theme(legend.title = element_blank())+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       strip.text.x = element_text(size = 25),
-  #       legend.title = element_text(size=20),
-  #       legend.text = element_text(size=20)) +
   scale_color_manual(values = fill.colors)+
   xlab(" ")+
   ylab("MCSE")
@@ -257,21 +239,9 @@ mcseModelParsB <- mcseEstimatesPars1%>%
   theme_classic()+
   theme(legend.position = "bottom")+
   theme(legend.title = element_blank())+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       strip.text.x = element_text(size = 25),
-  #       legend.title = element_text(size=20),
-  #       legend.text = element_text(size=20)) +
   scale_color_manual(values = fill.colors)+
   xlab(" ")+
   ylab(" ")
-
-
-
-
-
-
-
 
 ## Results for latent state distribution
 # auxiliary latent states
@@ -333,7 +303,6 @@ auxLatentEst <- lapply(seq_along(allPF), function(i){
 #Plot error plot
 errorModelParsAuxPF <- auxLatentEst%>%
   filter( !t %in% c("45","50"))%>%
-  # filter(variable %in% c("c"))%>%
   ggplot(data = ., mapping = aes(x = as.factor(t), y = mean, col = model))+
   geom_point(position = position_dodge(width = 0.7), size = 2)+
   geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = 0.2, position = position_dodge(width = 0.7),size=1)+
@@ -344,10 +313,6 @@ errorModelParsAuxPF <- auxLatentEst%>%
   theme_classic()+
   theme(legend.position = "bottom")+
   theme(legend.title = element_blank())+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       legend.title = element_text(size=20),
-  #       legend.text = element_text(size=20)) +
   scale_color_manual(values = fill.colors)+
   xlab( " ")+
   ylab(expression(paste("Median ", "\u00B1", " SD")))
@@ -389,12 +354,7 @@ aPlots <- lapply(auxPFSubset, function(y){
     theme_classic()+
     ylab("")+
     xlab("")+
-    theme(legend.position = "bottom")#+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       strip.text.x = element_text(size = 25),
-  #       legend.title = element_text(size=20),
-  #       legend.text = element_text(size=20))
+    theme(legend.position = "bottom")
 }
 )
 
@@ -429,13 +389,7 @@ ggsave(filename = "Figures/updatedModels.png",
        height = 8,
        units = "in")
 
-
-
-
 rm(list=ls())
-
-
-
 
 ######################
 # Simulation study 2: Dynamic occupancy model
@@ -461,37 +415,37 @@ fill.colors <- c("BMC" = "#FF6600",
                  "BUMC" = "#3399FF",
                  "truth" = "black")
 
-load("Example4/auxiliaryPF/simDataDynamicOccupancy.RData")
+load("dynamicOccupancyModel/auxiliaryPF/simDataDynamicOccupancy.RData")
 
 #load baseline model results
-load("Example4/auxiliaryPF/baselineModel.RData")
+load("dynamicOccupancyModel/auxiliaryPF/baselineModel.RData")
 BMC <- baselineModelEst
 
 
 #######
 # Reduced Models... Same for all No of particles
 #######
-load("Example4/auxiliaryPF/example4ReducedBootstrapTrueM10Ind29.RData")
+load("dynamicOccupancyModel/auxiliaryPF/example4ReducedBootstrapTrueM10Ind29.RData")
 RMC <- example2ReducedModelTrue
 
-load("Example4/auxiliaryPF/example4ReducedBootstrapTrueM10Ind25.RData")
+load("dynamicOccupancyModel/auxiliaryPF/example4ReducedBootstrapTrueM10Ind25.RData")
 RMC2 <- example2ReducedModelTrue
 ########
 # M = 10
 #####
 numParticles <- 10
 iNodePrev <- 29
-load(paste0("Example4/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
 BUMC <- example2UpdatedModelTrue
 
-load(paste0("Example4/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
 AUMC <- example2UpdatedModelTrue
 
 iNodePrev <- 25
-load(paste0("Example4/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
 BUMC2 <- example2UpdatedModelTrue
 
-load(paste0("Example4/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
 AUMC2 <- example2UpdatedModelTrue
 
 #########
@@ -500,17 +454,17 @@ AUMC2 <- example2UpdatedModelTrue
 # Note that the reduced model is the same irrespective of M
 numParticles <- 25
 iNodePrev <- 29
-load(paste0("Example4/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
 BUMC3 <- example2UpdatedModelTrue
 
-load(paste0("Example4/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
 AUMC3 <- example2UpdatedModelTrue
 
 iNodePrev <- 25
-load(paste0("Example4/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
 BUMC4 <- example2UpdatedModelTrue
 
-load(paste0("Example4/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
 AUMC4 <- example2UpdatedModelTrue
 
 
@@ -520,17 +474,17 @@ AUMC4 <- example2UpdatedModelTrue
 # Note that the reduced model is the same irrespective of M
 numParticles <- 50
 iNodePrev <- 29
-load(paste0("Example4/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
 BUMC5 <- example2UpdatedModelTrue
 
-load(paste0("Example4/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
 AUMC5 <- example2UpdatedModelTrue
 
 iNodePrev <- 25
-load(paste0("Example4/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
 BUMC6 <- example2UpdatedModelTrue
 
-load(paste0("Example4/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
 AUMC6 <- example2UpdatedModelTrue
 
 
@@ -540,17 +494,17 @@ AUMC6 <- example2UpdatedModelTrue
 # Note that the reduced model is the same irrespective of M
 numParticles <- 100
 iNodePrev <- 29
-load(paste0("Example4/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
 BUMC7 <- example2UpdatedModelTrue
 
-load(paste0("Example4/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
 AUMC7 <- example2UpdatedModelTrue
 
 iNodePrev <- 25
-load(paste0("Example4/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
 BUMC8 <- example2UpdatedModelTrue
 
-load(paste0("Example4/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
+load(paste0("dynamicOccupancyModel/auxiliaryPF/example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
 AUMC8 <- example2UpdatedModelTrue
 
 
@@ -695,104 +649,6 @@ ggsave(filename = "Figures/psifs.png",
        height = 4,
        units = "in")
 
-
-# Extract growth rate
-# growthRateVals <- allOccResults%>%
-#   group_by(model, type, nParticles)%>%
-#   mutate_at(., c("estimates","truth"), as.numeric)%>%
-#   mutate(corr = ifelse(type == "t=18",
-#                        cor(estimates[19:20], truth[19:20]),
-#                        cor(estimates[16:20], truth[16:20])),
-#          perChange = (((estimates[20]/estimates[1])^(1/20)-1)*100 - ((truth[20]/truth[1])^(1/20)-1)*100),
-#          biasChange = ((estimates[20] - truth[20])*100)
-#   )%>%
-#   summarise(corr = mean(corr),
-#             perChange = mean(perChange),
-#             biasChange = mean(biasChange))%>%
-#   ungroup()%>%
-#   reshape2::melt(., id.vars = c("model", "type", "nParticles"))
-#
-
-# occSites <- data.frame(BMC = ret[[1]],
-#                        BUMC = ret[[3]],
-#                        AUMC = ret[[4]],
-#                        truth = simData$occSites,
-#                        year = 1:50)%>%
-#   reshape2::melt(id.vars = c("year"))%>%
-#   filter(year > 39)%>%
-#   ggplot(data = ., mapping = aes(x = year,
-#                                  y = value, col = variable, group = variable))+
-#   geom_point(position = position_dodge(width = 1),size=8)+
-#   geom_line(position = position_dodge(width = 1),linewidth = 2)+
-#   theme_classic()+
-#   #ylim(c(0.75, 1.6))+
-#   geom_vline(xintercept = 48, linetype = "dashed", col = "red")+
-#   scale_color_manual(name = "Model", values = fill.colors)+
-#   scale_x_continuous(breaks = c(0, 10, 20, 30, 40, 50))+
-#   xlab("")+
-#   ylab("")+
-#   #labs(title = "A) t = 48")+
-#   annotate("text", x= 50, y= 0.9, parse=TRUE, label = paste("R[1]^{2}==" , round(cor(ret[[1]], simData$occSites), digits = 4)), size = 10)+
-#   #annotate("text", x= 50, y= 0.8, parse=TRUE,label = paste("R[2]^{2}==" , round(cor(ret[[2]], simData$occSites[1:45]), digits = 4)), size = 10)+
-#   annotate("text", x= 50, y= 0.7, parse=TRUE,label = paste("R[2]^{2}==", round(cor(ret[[3]], simData$occSites), digits = 4)), size = 10)+
-#   annotate("text", x= 50, y= 0.6, parse=TRUE,label = paste("R[3]^{2}==" , round(cor(ret[[4]], simData$occSites), digits = 4)), size = 10)+
-#   theme(axis.title = element_text(size = 25),
-#         axis.text = element_text(size = 20),
-#         legend.title = element_text(size=30),
-#         legend.position = "bottom",
-#         legend.text = element_text(size=20),
-#         plot.title = element_text(size = 35))
-#
-# occSites1000 <- data.frame(BMC = ret1000[[1]],
-#                            BUMC = ret1000[[3]],
-#                            AUMC = ret1000[[4]],
-#                            truth = simData$occSites,
-#                            year = 1:50)%>%
-#   reshape2::melt(id.vars = c("year"))%>%
-#   filter(year > 39)%>%
-#   ggplot(data = ., mapping = aes(x = year,
-#                                  y = value, col = variable, group = variable))+
-#   geom_point(position = position_dodge(width = 1),size=8)+
-#   geom_line(position = position_dodge(width = 1),linewidth = 2)+
-#   theme_classic()+
-#   #ylim(c(0.75, 1.6))+
-#   geom_vline(xintercept = 40, linetype = "dashed", col = "red")+
-#   scale_color_manual(name = "Model", values = fill.colors)+
-#   scale_x_continuous(breaks = c(0, 10, 20, 30, 40, 50))+
-#   xlab("")+
-#   ylab("")+
-#  # labs(title = "B) t = 40 ")+
-#   annotate("text", x= 50, y= 0.9, parse=TRUE, label = paste("R[1]^{2}==" , round(cor(ret1000[[1]], simData$occSites), digits = 4)), size = 10)+
-#   #annotate("text", x= 50, y= 0.8, parse=TRUE,label = paste("R[2]^{2}==" , round(cor(ret[[2]], simData$occSites[1:45]), digits = 4)), size = 10)+
-#   annotate("text", x= 50, y= 0.7, parse=TRUE,label = paste("R[2]^{2}==", round(cor(ret1000[[3]], simData$occSites), digits = 4)), size = 10)+
-#   annotate("text", x= 50, y= 0.6, parse=TRUE,label = paste("R[3]^{2}==" , round(cor(ret1000[[4]], simData$occSites), digits = 4)), size = 10)+
-#   theme(axis.title = element_text(size = 25),
-#         axis.text = element_text(size = 20),
-#         legend.title = element_text(size=30),
-#         legend.position = "bottom",
-#         legend.text = element_text(size=20),
-#         plot.title = element_text(size = 35))
-#
-#
-# fig <- ggpubr::ggarrange(occSites, occSites1000,
-#                          nrow = 2, ncol = 1,
-#                          common.legend = TRUE,
-#                          legend = "bottom",
-#                          font.label = list(size = 25),
-#                          labels = c("a)", "b)"))
-#
-# occPlots <- annotate_figure(fig,
-#                             left = text_grob("Average occupied sites", rot = 90, size = 30),
-#                             bottom = text_grob("Year", size = 30))
-
-
-# ggsave(filename = "Figures/psifs.png",
-#        plot = occPlots,
-#        width = 22,
-#        height = 16,
-#        dpi = 100)
-
-
 ## Extract time
 ret <- lapply(allModels, function(x){
   x[[3]]
@@ -822,14 +678,7 @@ retMean29 <- lapply(allModels, function(x){
 
 retMean29 <- retMean29[sort(rownames(retMean29)),]%>%
 
-  # mutate(truth = c(-2.37, 2,
-  #                  2,
-  #                  -2.04, 2,
-  #                  1.11, 3,
-  #                  1.5,
-  #                  -0.77, 2,
-  #                  0.5
-  # ),
+
   mutate(truth = c(5.44, -2, 7.40, 2, 2, 3.74, 1.5, -1.07,3,3, 0.05),
   metric = "mean",
   parameters = pars,
@@ -868,15 +717,6 @@ retMean25 <- lapply(allModels1000, function(x){
   as.data.frame()
 
 retMean25 <- retMean25[sort(rownames(retMean25)),]%>%
-
-  # mutate(truth = c(-2.37, 2,
-  #                  2,
-  #                  -2.04, 2,
-  #                  1.11, 3,
-  #                  1.5,
-  #                  -0.77, 2,
-  #                  0.5
-  # ),
   mutate(truth = c(5.44, -2, 7.40, 2, 2, 3.74, 1.5, -1.07,3,3, 0.05),
          metric = "mean",
          parameters = pars,
@@ -968,18 +808,6 @@ essFigPlots <- ESSret29%>%
   geom_point(aes(shape = model), size = 2,position = position_dodge(width = 0.9))+
   geom_hline(data = interceptVals, aes(yintercept = value),linetype = "dashed", col = "#FF3300")+
   facet_wrap( ~ Facets, labeller = label_parsed)+
-  #theme_classic()+
-  # scale_x_discrete(labels = c('alphaPSig' = expression(sigma[alpha^p]),
-  #                             'betaPSig'= expression(sigma[beta^p]),
-  #                             'alphaPsiSig'= expression(sigma[alpha^psi]),
-  #                             'betaPsiSig'= expression(sigma[beta^psi]),
-  #                             'alphaPhi'= expression(alpha^phi),
-  #                             'betaPhi'= expression(beta^phi),
-  #                             'alphaP'= expression(alpha^p),
-  #                             'betaP'= expression(beta^p),
-  #                             'alphaPsi'= expression(alpha^Psi),
-  #                             'betaPsi'= expression(beta^Psi),
-  #                             "colonisationProb"= expression(gamma)))+
   scale_color_manual(values = fill.colors)+
   xlab("")+
   ylab("ESS")+
@@ -987,14 +815,7 @@ essFigPlots <- ESSret29%>%
     strip.text.x = element_text( color = "black"
     )
   )+
-  #labs(title = "A) M = 100")+
-  labs(col = " ", shape = " ")#+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       legend.title = element_text(size=25),
-  #       legend.text = element_text(size=20),
-  #       plot.title = element_text(size = 35))
-
+  labs(col = " ", shape = " ")
 
 
 ESSret1000 <- lapply(allModels1000, function(x) {
@@ -1031,18 +852,6 @@ essFigPlots25 <- ESSret25%>%
   geom_point(aes(shape = model), size = 2,position = position_dodge(width = 0.9))+
   geom_hline(data = interceptVals, aes(yintercept = value),linetype = "dashed", col = "#FF3300")+
   facet_wrap( ~ Facets, labeller = label_parsed)+
-  #theme_classic()+
-  # scale_x_discrete(labels = c('alphaPSig' = expression(sigma[alpha^p]),
-  #                             'betaPSig'= expression(sigma[beta^p]),
-  #                             'alphaPsiSig'= expression(sigma[alpha^psi]),
-  #                             'betaPsiSig'= expression(sigma[beta^psi]),
-  #                             'alphaPhi'= expression(alpha^phi),
-  #                             'betaPhi'= expression(beta^phi),
-  #                             'alphaP'= expression(alpha^p),
-  #                             'betaP'= expression(beta^p),
-  #                             'alphaPsi'= expression(alpha^Psi),
-  #                             'betaPsi'= expression(beta^Psi),
-  #                             "colonisationProb"= expression(gamma)))+
 scale_color_manual(values = fill.colors)+
   theme(
   strip.text.x = element_text( color = "black"
@@ -1050,37 +859,7 @@ scale_color_manual(values = fill.colors)+
 )+
   xlab("")+
   ylab("ESS")+
-  #labs(title = "A) M = 100")+
   labs(col = " ", shape = " ")
-
-# ESSret40 <- ESSret1000%>%
-#   dplyr::mutate(parameters = c(pars))%>%
-#   reshape2::melt(., id.vars = c("parameters"))%>%
-#   filter(!variable %in% c("RMC"))%>%
-#   ggplot(., aes(x = parameters, y = value, col = variable))+
-#   geom_point(aes(shape = variable), size = 2,position = position_dodge(width = 0.9))+
-#   theme_classic()+
-#   scale_x_discrete(labels = c('alphaPSig' = expression(sigma[alpha^p]),
-#                               'betaPSig'= expression(sigma[beta^p]),
-#                               'alphaPsiSig'= expression(sigma[alpha^psi]),
-#                               'betaPsiSig'= expression(sigma[beta^psi]),
-#                               'alphaPhi'= expression(alpha^phi),
-#                               'betaPhi'= expression(beta^phi),
-#                               'alphaP'= expression(alpha^p),
-#                               'betaP'= expression(beta^p),
-#                               'alphaPsi'= expression(alpha^Psi),
-#                               'betaPsi'= expression(beta^Psi),
-#                               "colonisationProb"= expression(gamma)))+
-#   scale_color_manual(values = fill.colors)+
-#   xlab("")+
-#   ylab(" ")+
-#   #labs(title = "B) M = 1000")+
-#   labs(col = " ", shape = " ")#+
-#   # theme(axis.title = element_text(size = 25),
-#   #       axis.text = element_text(size = 20),
-#   #       legend.title = element_text(size=25),
-#   #       legend.text = element_text(size=20),
-#   #       plot.title = element_text(size = 35))
 
 
 ## Efficiency
@@ -1130,18 +909,6 @@ EfficiencyRet1 <- EfficiencyRet29%>%
   geom_point(aes(shape = model), size = 2,position = position_dodge(width = 0.9))+
   geom_hline(data = interceptVals, aes(yintercept = value),linetype = "dashed", col = "#FF3300")+
   facet_wrap( ~ Facets, labeller = label_parsed)+
-  #theme_classic()+
-  # scale_x_discrete(labels = c('alphaPSig' = expression(sigma[alpha^p]),
-  #                             'betaPSig'= expression(sigma[beta^p]),
-  #                             'alphaPsiSig'= expression(sigma[alpha^psi]),
-  #                             'betaPsiSig'= expression(sigma[beta^psi]),
-  #                             'alphaPhi'= expression(alpha^phi),
-  #                             'betaPhi'= expression(beta^phi),
-  #                             'alphaP'= expression(alpha^p),
-  #                             'betaP'= expression(beta^p),
-  #                             'alphaPsi'= expression(alpha^Psi),
-  #                             'betaPsi'= expression(beta^Psi),
-#                             "colonisationProb"= expression(gamma)))+
 scale_color_manual(values = fill.colors)+  theme(
   strip.text.x = element_text( color = "black"
   )
@@ -1150,35 +917,6 @@ scale_color_manual(values = fill.colors)+  theme(
   ylab("Efficiency")+
   #labs(title = "A) M = 100")+
   labs(col = " ", shape = " ")
-
-  # EfficiencyRet%>%
-  # dplyr::mutate(parameters = c(pars))%>%
-  # reshape2::melt(., id.vars = c("parameters"))%>%
-  # filter(!variable %in% c("RMC"))%>%
-  # ggplot(., aes(x = parameters, y = value, col = variable))+
-  # geom_point(aes(shape = variable), size = 2,position = position_dodge(width = 0.9))+
-  # theme_classic()+
-  # scale_x_discrete(labels = c('alphaPSig' = expression(sigma[alpha^p]),
-  #                             'betaPSig'= expression(sigma[beta^p]),
-  #                             'alphaPsiSig'= expression(sigma[alpha^psi]),
-  #                             'betaPsiSig'= expression(sigma[beta^psi]),
-  #                             'alphaPhi'= expression(alpha^phi),
-  #                             'betaPhi'= expression(beta^phi),
-  #                             'alphaP'= expression(alpha^p),
-  #                             'betaP'= expression(beta^p),
-  #                             'alphaPsi'= expression(alpha^Psi),
-  #                             'betaPsi'= expression(beta^Psi),
-  #                             "colonisationProb"= expression(gamma)))+
-  # scale_color_manual(values = fill.colors)+
-  # xlab("")+
-  # ylab("Efficiency")+
-  # labs(col = " ", shape = " ")#+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       legend.title = element_text(size=25),
-  #       legend.text = element_text(size=20),
-  #       plot.title = element_text(size = 35))
-
 
 
 EfficiencyRet1000 <- lapply(allModels1000, function(x) {
@@ -1247,39 +985,6 @@ scale_color_manual(values = fill.colors)+  theme(
   labs(col = " ", shape = " ")
 
 
-
-
-
-
-# EfficiencyRet2 <- EfficiencyRet1000%>%
-#   dplyr::mutate(parameters = c(pars))%>%
-#   reshape2::melt(., id.vars = c("parameters"))%>%
-#   filter(!variable %in% c("RMC"))%>%
-#   ggplot(., aes(x = parameters, y = value, col = variable))+
-#   geom_point(aes(shape = variable), size = 2,position = position_dodge(width = 0.9))+
-#   theme_classic()+
-#   scale_x_discrete(labels = c('alphaPSig' = expression(sigma[alpha^p]),
-#                               'betaPSig'= expression(sigma[beta^p]),
-#                               'alphaPsiSig'= expression(sigma[alpha^psi]),
-#                               'betaPsiSig'= expression(sigma[beta^psi]),
-#                               'alphaPhi'= expression(alpha^phi),
-#                               'betaPhi'= expression(beta^phi),
-#                               'alphaP'= expression(alpha^p),
-#                               'betaP'= expression(beta^p),
-#                               'alphaPsi'= expression(alpha^Psi),
-#                               'betaPsi'= expression(beta^Psi),
-#                               "colonisationProb"= expression(gamma)))+
-#   scale_color_manual(values = fill.colors)+
-#   xlab("")+
-#   ylab("")+
-#   labs(col = " ", shape = " ")#+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       legend.title = element_text(size=25),
-  #       legend.text = element_text(size=20),
-  #       plot.title = element_text(size = 35))
-
-
 ## Put all plots together
 fig <- ggpubr::ggarrange(essFigPlots,
                          EfficiencyRet1,
@@ -1320,13 +1025,7 @@ aPlots <- lapply(allModels[1:4], function(y){
     ggmcmc::ggs_traceplot()+
     theme_classic()+
     ylab("")+
-    xlab("")#+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       strip.text = element_text(size = 25),
-  #       legend.title = element_text(size=25),
-  #       legend.text = element_text(size=20),
-  #       plot.title = element_text(size = 35))
+    xlab("")
 }
 )
 
@@ -1351,13 +1050,7 @@ aPlots <- lapply(allModels[1:4], function(y){
     ggmcmc::ggs_traceplot()+
     theme_classic()+
     ylab("")+
-    xlab("")#+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       legend.title = element_text(size=25),
-  #       strip.text = element_text(size = 25),
-  #       legend.text = element_text(size=20),
-  #       plot.title = element_text(size = 35))
+    xlab("")
 }
 )
 
@@ -1381,12 +1074,7 @@ aPlots <- lapply(allModels, function(y){
     ggmcmc::ggs_traceplot()+
     theme_classic()+
     ylab("")+
-    xlab("")#+
-  # theme(axis.title = element_text(size = 25),
-  #       axis.text = element_text(size = 20),
-  #       legend.title = element_text(size=25),
-  #       legend.text = element_text(size=20),
-  #       plot.title = element_text(size = 35))
+    xlab("")
 }
 )
 
@@ -1477,19 +1165,19 @@ fill.colors <- c("BMC" = "#FF6600",
                  "truth" = "black")
 
 
-load("Example2/bootstrapPF/baselineModelMCMCResults.RData")
+load("demographicSSM/bootstrapPF/baselineModelMCMCResults.RData")
 BMC <- baselineModelMCMC
 rm(baselineModelMCMC)
 
-load("Example2/bootstrapPF/reducedModelResults.RData")
+load("demographicSSM/bootstrapPF/reducedModelResults.RData")
 RMC <- example2ReducedModelTrue
 rm(example2ReducedModelTrue)
 
-load("Example2/bootstrapPF/updatedModelResultsBPF.RData")
+load("demographicSSM/bootstrapPF/updatedModelResultsBPF.RData")
 BUMC <- example2UpdatedModelTrue
 rm(example2UpdatedModelTrue)
 
-load("Example2/bootstrapPF/updatedModelResultsAPF.RData")
+load("demographicSSM/bootstrapPF/updatedModelResultsAPF.RData")
 AUMC <- example2UpdatedModelTrue
 rm(example2UpdatedModelTrue)
 
@@ -1529,28 +1217,6 @@ ret1SD <- lapply(allModels, function(x){
   extractNames <- rownames(x[[2]]$all.chains)[grepl("popindex", rownames(x[[2]]$all.chains))]
   x[[2]]$all.chains[extractNames, 3]
 })
-
-
-# Plot population index
-# Plot population index
-# popnIndex <- data.frame(#BBSC = ret1[[1]],
-#   BMC = ret1[[1]],
-#   RMC = c(ret1[[2]], rep(NA, 2)),
-#   BUMC = c(ret1[[3]]),
-#   #ABSC = ret1[[5]],
-#   AUMC = c(ret1[[4]]),
-#   year = 1999:2016)%>%
-#   reshape2::melt(id.vars = c("year"),
-#                  value.name = "mean")
-#
-# popnIndexSD <- data.frame(#BBSC = ret1[[1]],
-#   BMC = ret1SD[[1]],
-#   RMC = c(ret1SD[[2]], rep(NA, 2)),
-#   BUMC = c(ret1SD[[3]]),
-#   #ABSC = ret1[[5]],
-#   AUMC = c(ret1SD[[4]]),
-#   year = 1999:2016)%>%
-#   reshape2::melt(id.vars = c("year"))
 
 allOccResults <- c(ret1[-2],
                    ret[-2])%>%
@@ -1611,77 +1277,6 @@ fig <- allOccResults%>%
   xlab("Metric")+
   ylab("Estimate")
 
-# popnIndex <- cbind(popnIndex, sd = popnIndexSD[,3])%>%
-#   ggplot(data = ., mapping = aes(x = year,
-#                                  y = mean, col = variable, group = variable))+
-#   geom_point(position = position_dodge(width = 0.7),size=4)+
-#   geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = 0.2, position = position_dodge(width = 0.7),linewidth = 1)+
-#   geom_line(position = position_dodge(width = 0.7),linewidth = 1)+
-#   annotate("text", x= 2005, y= 2500, parse=TRUE, label = paste("R[1]^{2}==" , round(cor(popnIndex[popnIndex$variable == "BUMC", 3][1:16],
-#                                                                                         popnIndex[popnIndex$variable == "BMC", 3][1:16]), digits = 4)), size = 10)+
-#   annotate("text", x= 2005, y= 2300, parse=TRUE,label = paste("R[2]^{2}==" , round(cor(popnIndex[popnIndex$variable == "AUMC", 3][1:16],
-#                                                                                        popnIndex[popnIndex$variable == "BMC", 3][1:16]), digits = 4)), size = 10)+
-#   #annotate("text", x= 2010, y= 0.4, parse=TRUE,label = paste("R[3]^{2}==", round(cor(allData[allData$Model == "RMC" & allData$variable =="psi.fs", 4][1:45],
-#   #                                                                                  allData[allData$Model == "BMC" & allData$variable =="psi.fs", 4][1:45]), digits = 4)), size = 10)+
-#   geom_vline(xintercept = 2011, linetype = "dashed", col = "red")+
-#   theme_classic()+
-#   xlab("Year")+
-#   ylab("A) Population Size")+
-#   theme(axis.title = element_text(size = 25),
-#         axis.text = element_text(size = 20),
-#         legend.title = element_text(size=20),
-#         legend.text = element_text(size=20))+
-#   scale_color_manual(values = fill.colors)
-#
-# growthRate <- data.frame(#BBSC = ret[[1]],
-#   BMC = ret[[1]],
-#   RMC = c(ret[[2]], rep(NA, 2)),
-#   BUMC = c(ret[[3]]),
-#   #ABSC = ret[[5]],
-#   AUMC = c(ret[[4]]),
-#   year = 1999:2015)%>%
-#   reshape2::melt(id.vars = c("year"),
-#                  value.name = "mean")
-#
-# growthRateSD <- data.frame(#BBSC = ret[[1]],
-#   BMC = retSD[[1]],
-#   RMC = c(retSD[[2]], rep(NA,2)),
-#   BUMC = c(retSD[[3]]),
-#   #ABSC = ret[[5]],
-#   AUMC = c(retSD[[4]]),
-#   year = 1999:2015)%>%
-#   reshape2::melt(id.vars = c("year"))
-#
-# growthRate <- cbind(growthRate, sd = growthRateSD[,3])%>%
-#   ggplot(data = ., mapping = aes(x = year,
-#                                  y = mean, col = variable, group = variable))+
-#   geom_point(position = position_dodge(width = 0.7),size=4)+
-#   geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = 0.2, position = position_dodge(width = 0.7),linewidth = 1)+
-#   geom_line(position = position_dodge(width = 0.7),linewidth = 1)+
-#   theme_classic()+
-#   ylim(c(0.7, 1.6))+
-#   geom_hline(yintercept = 1)+
-#   annotate("text", x= 2005, y= 1.4, parse=TRUE, label = paste("R[1]^{2}==" , round(cor(growthRate[growthRate$variable == "BUMC", 3][1:15],
-#                                                                                        growthRate[growthRate$variable == "BMC", 3][1:15]), digits = 4)), size = 10)+
-#   annotate("text", x= 2005, y= 1.3, parse=TRUE,label = paste("R[2]^{2}==" , round(cor(growthRate[growthRate$variable == "AUMC", 3][1:15],
-#                                                                                       growthRate[growthRate$variable == "BMC", 3][1:15]), digits = 4)), size = 10)+
-#   scale_color_manual(values = fill.colors)+
-#   xlab("Year")+
-#   ylab("B) Growth rate")+
-#   geom_vline(xintercept = 2011, linetype = "dashed", col = "red")+
-#   theme(axis.title = element_text(size = 25),
-#         axis.text = element_text(size = 20),
-#         legend.title = element_text(size=20),
-#         legend.text = element_text(size=20))
-#
-# fig <- ggarrange(popnIndex,
-#                  growthRate,
-#                  ncol = 1,
-#                  nrow= 2,
-#                  common.legend = TRUE,
-#                  legend = "top",
-#                 # labels = c("A)", "B)"),
-#                  font.label = list(size = 25))
 
 ggsave(filename = "Figures/example2.png",
        plot = fig,
@@ -1737,16 +1332,16 @@ fill.colors <- c("BMC" = "#FF6600",
                  "BUMC" = "#3399FF",
                  "truth" = "black")
 # load data
-load("Example3/reducedModelResults.RData")
+load("spartaOccupancyModel/reducedModelResults.RData")
 RMC <- example2ReducedModelTrue
 
-load("Example3/baselineModelMCMC.RData")
+load("spartaOccupancyModel/baselineModelMCMC.RData")
 BMC <- baselineModel
 
-load("Example3/updatedModelResultsBootstrap5.RData")
+load("spartaOccupancyModel/updatedModelResultsBootstrap5.RData")
 BUMC <- example2UpdatedModelTrue
 
-load("Example3/updatedModelResultsAuxiliary5.RData")
+load("spartaOccupancyModel/updatedModelResultsAuxiliary5.RData")
 AUMC <- example2UpdatedModelTrue
 
 rm(example2ReducedModelTrue, example2UpdatedModelTrue, baselineModel)
@@ -1803,105 +1398,3 @@ write.csv(allResults, file = "Figures/spartaModelUpdatedResults.csv", row.names 
 ret <- lapply(allModels, function(x){
   x[[3]]
 })
-
-
-
-
-#retSD <- retSD[-50]
-
-
-
-
-
-
-#load("/Users/kwakupa/Dropbox/Data for PHD/particleFilters/Example3/Lasius niger_z.rdata")
-#psi.fs <- out$BUGSoutput$mean$psi.fs
-#baselineModel <- out$BUGSoutput
-#load("/Users/kwakupa/Dropbox/Data for PHD/particleFilters/spartaOccupancyModel/baselineModel.RData")
-#save(baselineModel, file = "Example3/baselineModel.RData")
-load("Example3/baselineModel.RData")
-names <- rownames(baselineModel[[9]])[grepl("psi.fs", rownames(baselineModel[[9]]))]
-psi.fs <- baselineModel[[9]][names, 5]
-growthRate(psi.fs)
-psi.fsSD <- baselineModel[[9]][names, 2]
-
-# Extract a
-
-retA <- lapply(seq_along(allModels), function(x){
-  if(x == 1){
-    vals <- allModels[[x]]$summary$all.chains[1:49, 1]
-  }else{
-    vals <- allModels[[x]]$summary$all.chains[1:51, 1]
-  }
-})
-
-retAsd <- lapply(seq_along(allModels), function(x){
-  if(x == 1){
-    vals <- allModels[[x]]$summary$all.chains[1:49, 3]
-  }else{
-    vals <- allModels[[x]]$summary$all.chains[1:51, 3]
-  }
-})
-
-aOut <- baselineModel[[9]][1:51, 1]
-
-aOutsd <- baselineModel[[9]][1:51, 3]
-#aOut <- out$BUGSoutput$mean$a
-
-year <- 1970:2020
-
-extractedValuesA <- data.frame(a = c(retA[[2]], retA[[3]],aOut),
-                               psi.fs = c(ret[[2]], ret[[3]],psi.fs),
-                               #aSD = c(retAsd, aOutsd),
-                               #psi.fsSD = c(retSD, psi.fsSD),
-                               Model = rep(c("BUMC", "AUMC", "BMC"), each = 51),
-                               year = rep(year, 3))%>%
-  reshape2::melt(id.vars = c("Model", "year"),
-                 value.name = "mean")
-
-
-extractedValuesB <- data.frame(#a = c(retA, aOut),
-  #psi.fs = c(ret, psi.fs),
-  aSD = c(retAsd[[2]], retAsd[[3]],aOutsd),
-  psi.fsSD = c(retSD[[2]], retAsd[[3]],psi.fsSD),
-  Model = rep(c("BUMC", "AUMC", "BMC"), each = 51),
-  year = rep(year, 3))%>%
-  reshape2::melt(id.vars = c("Model", "year"),
-                 value.name = "sd")
-
-allData <- cbind(extractedValuesA, sd = extractedValuesB[,4 ])
-
-extractedValues <- allData %>%
-  filter(year > 2017)%>%
-  ggplot(., mapping = aes(x = year, y = mean, col = Model))+
-  geom_point(position = position_dodge(width = 0.7), size = 8)+
-  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = 0.2, position = position_dodge(width = 0.7),linewidth = 1)+
-  geom_line(position = position_dodge(width = 0.7),linewidth = 1)+
-  theme_classic()+
-  ylab("Estimated value")+
-  xlab("Year")+
-  geom_vline(xintercept = 2018, linetype = "dashed")+
-  facet_wrap( ~variable, ncol = 1, nrow = 2, scales = "free_y")+
-  theme(legend.position = "bottom")+
-  theme(axis.title = element_text(size = 25),
-        axis.text = element_text(size = 20),
-        strip.text.x = element_text(size = 25),
-        legend.title = element_text(size=20),
-        legend.text = element_text(size=20))+
-  scale_color_manual(values = fill.colors)
-
-ggsave(filename = "Figures/spartaPsifs.png",
-       plot = extractedValues,
-       width = 18,
-       height = 10,
-       dpi = 100)
-
-
-#plot visits
-load("/Users/kwakupa/Dropbox/Data for PHD/particleFilters/Example3/Lasius niger_z.rdata")
-simData <- out$model$data()
-hist(simData$Year)
-
-str(simData)
-
-

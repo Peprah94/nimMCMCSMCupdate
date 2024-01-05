@@ -1,6 +1,4 @@
-
-
-# Occupancy models
+# Dynamic occupancy model
 library(nimble)
 library(nimbleSMC)
 library(nimMCMCSMCupdates)
@@ -9,34 +7,34 @@ library(nimMCMCSMCupdates)
 nyears = 30
 nsites = 300
 nvisits = 3
-iNodePrevAll = c(29, 25)
-pfTypeRun = "bootstrap"
+iNodePrevAll = c(29, 25) # the time steps used to fit the reduced models
 
 # Set the configurations for MCMC
 nIterations = 50000
 nBurnin = 20000
 nChains = 2
 nThin = 15
-#nThin = 1
-numParticles = 10
+numParticles = 10 # change this to 25, 50 and 100 for the particular number of particles you are interested in.
 
+##################################################
+# Function to simulate dynamic occupancy models  #
+##################################################
 
-# Function to simulate dynamic occupancy models
-dynOccupancyModels <- function(nyears,
-                               nsites,
-                               nvisits,
+dynOccupancyModels <- function(nyears, #number of years
+                               nsites, #number of sites
+                               nvisits, #number of visits
+                               #intercept and covariate effect for initial occupancy probability
                                fixedPars = list(alphaPhi = - 2,
                                                 betaPhi = 1.5),
+                               # standard deviation hyperparameters
                                hyperParsSig = list(alphaP = 2,
                                                    betaP = 3,
-                                                   alphaGamma = 1,
-                                                   betaGamma = 1.5,
                                                    alphaPsi = 2,
                                                    betaPsi = 3)){
 
-  # Simulating covariates
   set.seed(1994)
 
+  # Simulating covariates
   windSpeed <- array(runif(nyears*nsites*nvisits, -1, 1),
                      dim = c(nsites, nvisits, nyears))
   elevation <- runif(nsites, -1,1)
@@ -52,12 +50,9 @@ dynOccupancyModels <- function(nyears,
   betaP <- rnorm(1, mean = -2, sd = hyperParsSig$betaP)
   alphaPsi <- rnorm(1, mean = 3, sd = hyperParsSig$alphaPsi)
   betaPsi <- rnorm(1, mean = -2.5, sd = hyperParsSig$betaPsi)
-  alphaGamma <- rnorm(1, mean = 0, sd = hyperParsSig$alphaGamma)
-  betaGamma <- rnorm(1, mean = 0, sd = hyperParsSig$betaGamma)
 
   # Detection Probability
   detectProb <- array(NA, dim = c(nsites, nvisits, nyears))
-
   for(year.tag in 1:nyears){
     for(site.tag in 1:nsites){
       for(visit.tag in 1:nvisits){
@@ -74,7 +69,6 @@ dynOccupancyModels <- function(nyears,
   for(year.tag in 1:nyears){
     for(site.tag in 1:nsites){
       persistenceProb[site.tag,  year.tag] <- plogis(alphaPsi + betaPsi* springPrecipitation[site.tag, year.tag])
-      # colonisationProb[site.tag,  year.tag] <- plogis(alphaGamma[year.tag] + betaGamma[year.tag]* sizeOfBeak[site.tag, year.tag])
     }
   }
 
@@ -96,7 +90,6 @@ dynOccupancyModels <- function(nyears,
     }
   }
 
-
   #observations
   for(year.tag in 1:nyears){
     for(site.tag in 1:nsites){
@@ -107,9 +100,7 @@ dynOccupancyModels <- function(nyears,
   }
 
   # Proportion of occupied sites
-
   psi.fs <- colMeans(z)
-
 
   # Return list
   retList <- list()
@@ -134,18 +125,19 @@ dynOccupancyModels <- function(nyears,
 }
 
 # Simulating and saving data
-  #simData <- dynOccupancyModels(nyears = 30,
-  #                              nsites = 300,
-   #                             nvisits = 3)
+simData <- dynOccupancyModels(nyears = 30,
+                               nsites = 300,
+                               nvisits = 3)
 
- #save(simData, file = "simDataDynamicOccupancy.RData")
+ save(simData, file = "simDataDynamicOccupancy.RData")
 
-load("simDataDynamicOccupancy.RData")
+ # Uncomment this if you change the number of particles
+#load("simDataDynamicOccupancy.RData")
 
 # NIMBLE code
 # Try to do this first before updating, so I can use it for the bootstrap updating
-#for(i in seq_along(iNodePrevAll)){
- i = 2
+for(i in seq_along(iNodePrevAll)){
+  #number of years to fit the reduced model
    iNodePrev <- iNodePrevAll[i]
   dynOccupancyCode <- nimbleCode({
 
@@ -155,7 +147,7 @@ load("simDataDynamicOccupancy.RData")
     alphaPsiSig ~ T(dnorm(0, 0.1), 0.001, )
     betaPsiSig ~ T(dnorm(0, 0.1), 0.001, )
 
-
+    # Prior distribution for intercept and covariate effect
     alphaPhi ~ dnorm(0, sd = 10)
     betaPhi ~ dnorm(0, sd = 10)
 
@@ -218,17 +210,15 @@ load("simDataDynamicOccupancy.RData")
 
   })
 
-
-  # ## define data, constants, and initial values
+## define data, constants, and initial values
   z <- apply(simData$y, c(1, 3), function(x){
     ifelse(sum(x) > 0, 1, NA)
   })
-#
-#
-#   #####################
-#   #   Reduced Model
-#   ########################
-#
+
+#####################
+#   Reduced Model
+########################
+
   data <- list(
     y = simData$y[,,-c((iNodePrev +1):nyears)],
     windSpeed = simData$covariates$windSpeed[,,-c((iNodePrev +1):nyears)],
@@ -237,7 +227,7 @@ load("simDataDynamicOccupancy.RData")
     sizeOfBeak = simData$covariates$sizeOfBeak,
     z = z[,-c((iNodePrev +1):nyears)]
   )
-#
+
   constants <- list(
     nyears = iNodePrev,
     nsites = nsites,
@@ -260,9 +250,7 @@ load("simDataDynamicOccupancy.RData")
     alphaPhi=  rnorm(1),
     betaPhi= rnorm(1)
   )
-#
-#
-#
+
 #   # NIMBLE model for reduced model
   newModelReduced <- nimbleModel(dynOccupancyCode,
                                  data = data,
@@ -271,56 +259,48 @@ load("simDataDynamicOccupancy.RData")
                                  check = FALSE)
 
   # Fitting the model
-  # example2ReducedModelTrue <- spartaNimWeights(model = newModelReduced,
-  #                                              latent = "z",
-  #                                              nParFiltRun = numParticles,
-  #                                              mcmc = TRUE,
-  #                                              pfType = pfTypeRun,
-  #                                              #pfType = pfTypeRun,
-  #                                              pfControl = list(saveAll = TRUE,
-  #                                                               smoothing = TRUE,
-  #                                                               timeIndex = 2),
-  #                                              MCMCconfiguration = list(target = c('alphaPSig', 'betaPSig',
-  #                                                                                  'alphaPsiSig', 'betaPsiSig',
-  #                                                                                  'alphaPhi', 'betaPhi',
-  #                                                                                  'alphaP', 'betaP',
-  #                                                                                  'alphaPsi', 'betaPsi',
-  #                                                                                  "colonisationProb"
-  #                                              ),
-  #                                              additionalPars = c( "psi.fs"
-  #                                              ),
-  #                                              n.iter = nIterations,
-  #                                              n.chains = nChains,
-  #                                              n.burnin = nBurnin,
-  #                                              n.thin = nThin)
-  # )
-  # #save results
-  # save(example2ReducedModelTrue, file= paste0("example4ReducedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
+  example2ReducedModelTrue <- spartaNimWeights(model = newModelReduced,
+                                               latent = "z",
+                                               nParFiltRun = numParticles,
+                                               mcmc = TRUE,
+                                               pfType = pfTypeRun,
+                                               pfControl = list(saveAll = TRUE,
+                                                                smoothing = TRUE,
+                                                                timeIndex = 2),
+                                               MCMCconfiguration = list(target = c('alphaPSig', 'betaPSig',
+                                                                                   'alphaPsiSig', 'betaPsiSig',
+                                                                                   'alphaPhi', 'betaPhi',
+                                                                                   'alphaP', 'betaP',
+                                                                                   'alphaPsi', 'betaPsi',
+                                                                                   "colonisationProb"
+                                               ),
+                                               additionalPars = c( "psi.fs"
+                                               ),
+                                               n.iter = nIterations,
+                                               n.chains = nChains,
+                                               n.burnin = nBurnin,
+                                               n.thin = nThin)
+  )
 
-  #load(paste0("example4ReducedBootstrapTrue",i,".RData"))
+  #save results
+  save(example2ReducedModelTrue, file= paste0("example4ReducedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
 
   ################
   # Updated Model
   ################
  load(paste0("example4ReducedBootstrapTrueM10Ind",iNodePrev,".RData"))
-  # z <- simData$z
-  # z1 <- apply(simData$y, c(1, 3), function(x){
-  #   ifelse(sum(x) > 0, 1, NA)
-  # })
-  #
-  # z[,49:50] <- z1[, 49:50]
 
   data <- list(
-    y = simData$y,#[,,c((iNodePrev ):nyears)],
-    windSpeed = simData$covariates$windSpeed,#[,,c((iNodePrev ):nyears)],
+    y = simData$y,
+    windSpeed = simData$covariates$windSpeed,
     elevation = simData$covariates$elevation,
-    springPrecipitation = simData$covariates$springPrecipitation,#[,c((iNodePrev ):nyears)],
+    springPrecipitation = simData$covariates$springPrecipitation,
     sizeOfBeak = simData$covariates$sizeOfBeak,
-    z = z#[,c((iNodePrev ):nyears)]
+    z = z
   )
-  #
+
   constants <- list(
-    nyears = nyears,# - iNodePrev +1,
+    nyears = nyears,
     nsites = nsites,
     nvisits = nvisits
   )
@@ -348,24 +328,11 @@ load("simDataDynamicOccupancy.RData")
                                  constants = constants,
                                  inits = inits,
                                  check = FALSE)
-#
-#
-#
-#   # ## Checking predictions
-#   # notDataNodes <- newModelUpdated$expandNodeNames("z")[!newModelUpdated$isData("z")]
-#   # notDataNode1 <- notDataNodes[1:44]
-#   # notDataNode2 <- notDataNodes[45: length(notDataNodes)]
-#   # newModelUpdated$persistenceProb
-#   # newModelUpdated$psi.fs
-#   # newModelUpdated$simulate(nodes = notDataNode1)
-#   # newModelUpdated$calculate("psi.fs")
-#
+
 #   # Fitting the model
   example2UpdatedModelTrue <- spartaNimUpdates(model = newModelUpdated, #nimble model
                                                reducedModel = newModelReduced,
-                                               latent = "z", #latent variable
                                                nParFiltRun = numParticles,
-                                               #nParFiltRun = 1000,
                                                pfType = "bootstrap",
                                                propCov = c(1,1,1,1,1,1,0.01)*diag(7),
                                                mcmcScale = 1,
@@ -395,178 +362,103 @@ load("simDataDynamicOccupancy.RData")
    save(example2UpdatedModelTrue, file= paste0("example4UpdatedBootstrapTrueM",numParticles,"Ind",iNodePrev,".RData"))
 
 #
-#   # Fitting the model
-  # example2UpdatedModelTrue <- spartaNimUpdates(model = newModelUpdated, #nimble model
-  #                                              reducedModel = newModelReduced,
-  #                                              latent = "z", #latent variable
-  #                                              nParFiltRun = numParticles,
-  #                                              #nParFiltRun = 1000,
-  #                                              pfType = "auxiliary",
-  #                                              propCov = c(1,1,1,1,1,1,0.01)*diag(7),
-  #                                              mcmcScale = 1,
-  #                                              extraVars = NULL,
-  #                                              MCMCconfiguration = list(target = c('alphaPSig', 'betaPSig',
-  #                                                                                  'alphaPsiSig', 'betaPsiSig',
-  #                                                                                  'alphaPhi', 'betaPhi',
-  #                                                                                  'alphaP', 'betaP',
-  #                                                                                  'alphaPsi', 'betaPsi',
-  #                                                                                  "colonisationProb"),
-  #                                                                       additionalPars = c("z", "psi.fs"),
-  #                                                                       n.iter = (nIterations - nBurnin)/nThin,
-  #                                                                       n.chains = nChains,
-  #                                                                       n.burnin = 10,
-  #                                                                       n.thin = 1),  #saved loglikelihoods from reduced model
-  #                                              postReducedMCMC = example2ReducedModelTrue,# MCMC summary to use as initial values
-  #                                              pfControl = list(saveAll = TRUE,
-  #                                                               timeIndex = 2,
-  #                                                               smoothing = TRUE,
-  #                                                               mcmc = TRUE,
-  #                                                               M = nyears - iNodePrev,
-  #                                                               iNodePrev = iNodePrev),
-  #                                              nCores = 1
-  # )
-  #
-  # save(example2UpdatedModelTrue, file= paste0("example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
-# #}
-#
-#   dynOccupancyCode <- nimbleCode({
-#
-#     # Prior distributions of hyperparameters
-#     alphaPSig ~ T(dnorm(0, 0.1), 0.001, )
-#     betaPSig ~ T(dnorm(0, 0.1), 0.001, )
-#     alphaPsiSig ~ T(dnorm(0, 0.1), 0.001, )
-#     betaPsiSig ~ T(dnorm(0, 0.1), 0.001, )
-#
-#
-#     alphaPhi ~ dnorm(0, sd = 10)
-#     betaPhi ~ dnorm(0, sd = 10)
-#
-#     # Prior distributions
-#     alphaP ~ dnorm(mean = 0, sd = alphaPSig)
-#     betaP ~ dnorm(mean = 0, sd =  betaPSig)
-#     alphaPsi ~ dnorm(mean = 0, sd =  alphaPsiSig)
-#     betaPsi ~ dnorm(mean = 0, sd =  betaPsiSig)
-#
-#     # Detection Probability
-#     for(year.tag in 1:nyears){
-#       for(site.tag in 1:nsites){
-#         for(visit.tag in 1:nvisits){
-#           logit(detectProb[site.tag, visit.tag, year.tag]) <- alphaP + betaP* windSpeed[site.tag, visit.tag, year.tag]
-#         }
-#       }
-#     }
-#
-#     # Initial occupancy probability psi
-#     for(site.tag in 1:nsites){
-#       logit(initOccuProb[site.tag]) <- alphaPhi + betaPhi*elevation[site.tag]
-#     }
-#
-#     # Persistence and colonisation probability
-#     for(year.tag in 1:nyears){
-#       for(site.tag in 1:nsites){
-#         logit(persistenceProb[site.tag,  year.tag]) <- alphaPsi + betaPsi* springPrecipitation[site.tag, year.tag]
-#         # logit(colonisationProb[site.tag,  year.tag]) <- alphaGamma[year.tag] + betaGamma[year.tag]* sizeOfBeak[site.tag, year.tag]
-#       }
-#     }
-#
-#     colonisationProb ~ dunif(0.01, 1)
-#
-#
-#     # Initial Presence/Absence
-#     for(site.tag in 1:nsites){
-#       z[site.tag, 1] ~ dbin(prob = initOccuProb[site.tag], 1)
-#     }
-#
-#     # True presence/absence
-#     for(year.tag in 2:nyears){
-#       for(site.tag in 1:nsites){
-#         z[site.tag, year.tag] ~ dbin(prob = (z[site.tag, (year.tag -1)] * persistenceProb[site.tag,  year.tag] + (1 - z[site.tag, (year.tag -1)])*colonisationProb), 1)
-#       }
-#     }
-#
-#     #observations
-#     for(year.tag in 1:nyears){
-#       for(site.tag in 1:nsites){
-#         for(visit.tag in 1:nvisits){
-#           y[site.tag, visit.tag, year.tag] ~ dbin(prob = z[site.tag, year.tag] * detectProb[site.tag, visit.tag, year.tag], 1)
-#         }
-#       }
-#     }
-#
-#     # Derived quantities
-#     for(year.tag in 1:nyears){
-#       psi.fs[year.tag] <- sum(z[1:nsites, year.tag])/nsites
-#     }
-#
-#   })
-#
-#
-# # ## define data, constants, and initial values
-# z <- apply(simData$y, c(1, 3), function(x){
-#   ifelse(sum(x) > 0, 1, NA)
-# })
-#
-#
-# data <- list(
-#   y = simData$y,
-#   windSpeed = simData$covariates$windSpeed,
-#   elevation = simData$covariates$elevation,
-#   springPrecipitation = simData$covariates$springPrecipitation,
-#   sizeOfBeak = simData$covariates$sizeOfBeak,
-#   z = z
-# )
-#
-# constants <- list(
-#   nyears = nyears,
-#   nsites = nsites,
-#   nvisits = nvisits
-# )
-# inits <- list(
-#   alphaPSig = 1,
-#   betaPSig  = 1,
-#   alphaPsiSig = 1,
-#   betaPsiSig  = 1,
-#   alphaGammaSig = 1,
-#   betaGammaSig = 1,
-#   alphaPhi  = 0,
-#   betaPhi  = 0,
-#   alphaP =  rnorm(1, mean = 0, sd = 1),
-#   betaP =  rnorm(1, mean = 0, sd = 1),
-#   alphaPsi=  rnorm(1, mean = 0, sd = 1),
-#   betaPsi= rnorm(1, mean = 0, sd = 1),
-#   colonisationProb = 0.01
-# )
-#
-# # NIMBLE model for reduced model
-# baselineModel <- nimbleModel(dynOccupancyCode,
-#                              data = data,
-#                              constants = constants,
-#                              inits = inits,
-#                              check = FALSE)
-#
-# # Fitting the model
-# baselineModelEst <- spartaNimWeights(model = baselineModel,
-#                                      latent = "z",
-#                                      nParFiltRun = numParticles,
-#                                      mcmc = TRUE,
-#                                      pfType = pfTypeRun,
-#                                      #pfType = pfTypeRun,
-#                                      pfControl = list(saveAll = TRUE,
-#                                                       smoothing = TRUE,
-#                                                       timeIndex = 2),
-#                                      MCMCconfiguration = list(target = c('alphaPSig', 'betaPSig',
-#                                                                          'alphaPsiSig', 'betaPsiSig',
-#                                                                          'alphaPhi', 'betaPhi',
-#                                                                          'alphaP', 'betaP',
-#                                                                          'alphaPsi', 'betaPsi',
-#                                                                          "colonisationProb"
-#                                      ),
-#                                      additionalPars = c( "psi.fs"
-#                                      ),
-#                                      n.iter = nIterations,
-#                                      n.chains = nChains,
-#                                      n.burnin = nBurnin,
-#                                      n.thin = nThin)
-# )
-# #save results
-# save(baselineModelEst, file= "baselineModel.RData")
+  # Fitting the model
+example2UpdatedModelTrue <- spartaNimUpdates(model = newModelUpdated, #nimble model
+                                             reducedModel = newModelReduced,
+                                             latent = "z", #latent variable
+                                             nParFiltRun = numParticles,
+                                             pfType = "auxiliary",
+                                             propCov = c(1,1,1,1,1,1,0.01)*diag(7),
+                                             mcmcScale = 1,
+                                             extraVars = NULL,
+                                             MCMCconfiguration = list(target = c('alphaPSig', 'betaPSig',
+                                                                                 'alphaPsiSig', 'betaPsiSig',
+                                                                                 'alphaPhi', 'betaPhi',
+                                                                                 'alphaP', 'betaP',
+                                                                                 'alphaPsi', 'betaPsi',
+                                                                                 "colonisationProb"),
+                                                                      additionalPars = c("z", "psi.fs"),
+                                                                      n.iter = (nIterations - nBurnin)/nThin,
+                                                                      n.chains = nChains,
+                                                                      n.burnin = 10,
+                                                                      n.thin = 1),  #saved loglikelihoods from reduced model
+                                             postReducedMCMC = example2ReducedModelTrue,# MCMC summary to use as initial values
+                                             pfControl = list(saveAll = TRUE,
+                                                              timeIndex = 2,
+                                                              smoothing = TRUE,
+                                                              mcmc = TRUE,
+                                                              M = nyears - iNodePrev,
+                                                              iNodePrev = iNodePrev),
+                                             nCores = 1
+)
+
+save(example2UpdatedModelTrue, file= paste0("example4UpdatedAuxiliaryTrueM",numParticles,"Ind",iNodePrev,".RData"))
+}
+
+
+z <- apply(simData$y, c(1, 3), function(x){
+  ifelse(sum(x) > 0, 1, NA)
+})
+
+data <- list(
+  y = simData$y,
+  windSpeed = simData$covariates$windSpeed,
+  elevation = simData$covariates$elevation,
+  springPrecipitation = simData$covariates$springPrecipitation,
+  sizeOfBeak = simData$covariates$sizeOfBeak,
+  z = z
+)
+
+constants <- list(
+  nyears = nyears,
+  nsites = nsites,
+  nvisits = nvisits
+)
+inits <- list(
+  alphaPSig = 1,
+  betaPSig  = 1,
+  alphaPsiSig = 1,
+  betaPsiSig  = 1,
+  alphaGammaSig = 1,
+  betaGammaSig = 1,
+  alphaPhi  = 0,
+  betaPhi  = 0,
+  alphaP =  rnorm(1, mean = 0, sd = 1),
+  betaP =  rnorm(1, mean = 0, sd = 1),
+  alphaPsi=  rnorm(1, mean = 0, sd = 1),
+  betaPsi= rnorm(1, mean = 0, sd = 1),
+  colonisationProb = 0.01
+)
+
+# NIMBLE model for reduced model
+baselineModel <- nimbleModel(dynOccupancyCode,
+                             data = data,
+                             constants = constants,
+                             inits = inits,
+                             check = FALSE)
+
+# Fitting the model
+baselineModelEst <- spartaNimWeights(model = baselineModel,
+                                     latent = "z",
+                                     nParFiltRun = numParticles,
+                                     mcmc = TRUE,
+                                     pfType = pfTypeRun,
+                                     pfControl = list(saveAll = TRUE,
+                                                      smoothing = TRUE,
+                                                      timeIndex = 2),
+                                     MCMCconfiguration = list(target = c('alphaPSig', 'betaPSig',
+                                                                         'alphaPsiSig', 'betaPsiSig',
+                                                                         'alphaPhi', 'betaPhi',
+                                                                         'alphaP', 'betaP',
+                                                                         'alphaPsi', 'betaPsi',
+                                                                         "colonisationProb"
+                                     ),
+                                     additionalPars = c( "psi.fs"
+                                     ),
+                                     n.iter = nIterations,
+                                     n.chains = nChains,
+                                     n.burnin = nBurnin,
+                                     n.thin = nThin)
+)
+#save results
+save(baselineModelEst, file= "baselineModel.RData")

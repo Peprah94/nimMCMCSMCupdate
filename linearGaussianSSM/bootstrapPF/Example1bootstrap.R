@@ -1,19 +1,19 @@
 ## load the nimble library and set seed
-load("Example1/simulatedDataEx1.RData")
+load("linearGaussianSSM/simulatedDataEx1.RData")
 
 # Load packages
 library('nimble')
 library(nimbleSMC)
 library(nimMCMCSMCupdates)
-
-pfTypeRun = "bootstrap"
-
-# load data
-source("Example1/functionSimEstimation.R")
-
-
 library(parallel)
 library(doParallel)
+
+pfTypeRun = "bootstrap" #type of particle fiter algorithm
+
+# load data
+source("linearGaussianSSM/functionSimEstimation.R")
+
+# making cluster to run the functions parallely
 thisCluster <- makeCluster(5)
 
 # Fit the bootstrap PF

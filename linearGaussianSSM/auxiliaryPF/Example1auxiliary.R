@@ -1,21 +1,21 @@
 
 ## load the nimble library and set seed
-load("Example1/simulatedDataEx1.RData")
+load("linearGaussianSSM/simulatedDataEx1.RData")
 
 
 # Load packages
 library(nimble)
 library(nimbleSMC)
 library(nimMCMCSMCupdates)
-
-pfTypeRun = "auxiliary"
-
-# load function to fit the models with MCMC
-source("Example1/functionSimEstimation.R")
-
-
 library(parallel)
 library(doParallel)
+
+pfTypeRun = "auxiliary" #tyoe of particle filter to run
+
+# load function to fit the models with MCMC
+source("linearGaussianSSM/functionSimEstimation.R")
+
+
 thisCluster <- makeCluster(5)
 
 # Fit an auxiliary PF

@@ -10,74 +10,65 @@ library(nimMCMCSMCupdates)
 
 # Function to fit replicated data
 
-runFunction <- function(iter,
-                        simDataAll,
-                        numParticles,
-                        mcmcRun = TRUE,
-                        pfTypeRun,
-                        nIterations,
-                        nBurnin,
-                        nChains,
-                        nThin,
-                        nyears,
-                        iNodePrev ){
+runFunction <- function(iter, #iteration indez
+                        simDataAll, #simulated data
+                        numParticles, #number of particles
+                        mcmcRun = TRUE, #whether to use MCMC (TRUE) or SMC (FALSE)
+                        pfTypeRun, #type of particle filter algorithm
+                        nIterations, #number of iterations
+                        nBurnin, #number of burn-in samples
+                        nChains, #number of chains
+                        nThin, #thin in samples
+                        nyears, #number of years (T)
+                        iNodePrev #number of years used to fit the reduced models (t)
+                        ){
 
+  #load packages
   library('nimble')
   library(nimbleSMC)
   library(nimMCMCSMCupdates)
 
   # create empty lists to store the results
   example1ReducedModelTrue <- list()
-  #example1ReducedModelFalse <- list()
   example1UpdatedModelTrueBF <- list()
   example1UpdatedModelTrueAux <- list()
-  #example1UpdatedModelFalse <- list()
   baselineModel <- list()
 
 
-  #load data
+  #load data for the particular iteration index
   simData <- simDataAll[[iter]]
 
   # NIMBLE CODE
   stateSpaceCode <- nimbleCode({
     x[1] ~ dnorm(a, sd = 1)
-    #x[1] <- 0
     y[1] ~ dnorm(c*x[1], sd = 1)
     for(i in 2:t){
       x[i] ~ dnorm(a*x[i-1], sd = 1)
       y[i] ~ dnorm(x[i] * c, 1)
     }
     a ~ dunif(0, 0.999)
-    #b ~ dnorm(0, 1)
     c ~ dnorm(1,1)
-    #d ~ T(dnorm(0, 1), 0.001, 4)
-
 
     #estimate biases
     ahat <- a - aTrue
-    #bhat <- b - bTrue
     chat <- c - cTrue
   })
 
   # ## define data
   data <- list(
-    y = simData$y
+    y = simData$y #observed data
   )
 
   # define constants
   constants <- list(
     t = nyears,
     aTrue = 0.5,
-    #bTrue = 0.5,
-    cTrue = 1,
-    dTrue = 1
+    cTrue = 1
   )
 
   #define initial values
   inits <- list(
     a = 0.2,
-    #b = 0.8,
-    # mu0= 0.8,
     c = 1
   )
 
@@ -90,15 +81,16 @@ runFunction <- function(iter,
 
   for(iNodetag in seq_along(iNodePrev)){
 
+    ################
+    # Reduced Model
+    ################
     data <- list(
-      y = simData$y[-c((iNodePrev[iNodetag]+1):50)]
+      y = simData$y[-c((iNodePrev[iNodetag]+1):50)] #select the subset of observed data
     )
     constants <- list(
-      t = iNodePrev[iNodetag],
+      t = iNodePrev[iNodetag], #year used to fit the reduced model
       aTrue = 0.5,
-      bTrue = 0.5,
-      cTrue = 1,
-      dTrue = 1
+      cTrue = 1
     )
 
     #Define model for reduced model
@@ -129,25 +121,21 @@ runFunction <- function(iter,
     ################
     # Updated Model
     ################
-    #message(paste("Running updated model for iNodePrev = ", iNodePrev[iNodetag], "and a = ", aVars[aVarstag]))
 
     # data for updated model
     data <- list(
-      y = simData$y#[c((iNodePrev[iNodetag]):50)]
+      y = simData$y
     )
 
     # constants for updated model
     constants <- list(
-      t = 50 ,#- iNodePrev[iNodetag] + 1,
+      t = 50 ,
       aTrue = 0.5,
-      #bTrue = 0.5,
       cTrue = 1
     )
 
     inits <- list(
       a = example1ReducedModelTrue[[iNodetag]]$summary$all.chains["a",1 ],
-      #b = 0.8,
-      # mu0= 0.8,
       c = example1ReducedModelTrue[[iNodetag]]$summary$all.chains["c",1 ]
     )
 
@@ -287,10 +275,8 @@ runFunction <- function(iter,
 #return results
   ret <- c(baselineModel,
             example1ReducedModelTrue,
-           #example1ReducedModelFalse,
            example1UpdatedModelTrueBF,
            example1UpdatedModelTrueAux
-          # example1UpdatedModelFalse
            )
 
   return(ret)
